@@ -1,0 +1,41 @@
+g++ beat_detector.cpp -o audio -L/home/tasos/Documents/visual_fractals/MusicBeatDetector_repo/build/MusicBeatDetector/bin/Release/ -lMusicBeatDetector -lportaudio -lfftw3f -lblas
+g++ -o mandelbrot_opengl main.cpp -lGL -lGLU -lglfw -lGLEW
+
+g++ g++ -o mandelbrot_opengl main.cpp -lGL -lGLU -lglfw -lGLEW -L/home/tasos/Documents/visual_fractals/MusicBeatDetector_repo/build/MusicBeatDetector/bin/Release/ -lMusicBeatDetector -lportaudio -lfftw3f -lblas
+
+//mandelbrot
+
+// Fragment Shader
+const char* fragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+uniform vec2 u_resolution;
+uniform vec2 u_offset;
+uniform float u_zoom;
+const int MAX_ITER = 2000;
+
+int mandelbrot(vec2 c) {
+    vec2 z = vec2(0.0);
+    int iterations = 0;
+
+    for (int i = 0; i < MAX_ITER; i++) {
+        if (length(z) > 2.0) break;
+        float xTemp = z.x * z.x - z.y * z.y + c.x;
+        z.y = 2.0 * z.x * z.y + c.y;
+        z.x = xTemp;
+        iterations++;
+    }
+    return iterations;
+}
+
+void main() {
+    vec2 coord = (gl_FragCoord.xy / u_resolution - 0.5) * u_zoom + u_offset;
+    int iterations = mandelbrot(coord);
+    
+    float t = float(iterations) / MAX_ITER;
+    vec3 color = vec3(t * 9.0, t * t * 15.0, t * t * t * 8.5);
+    if (iterations == MAX_ITER) color = vec3(0.0);
+
+    FragColor = vec4(color, 1.0);
+}
+)";
