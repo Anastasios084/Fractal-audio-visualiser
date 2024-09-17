@@ -3,12 +3,11 @@ COMP = g++
 FLAGS = -std=c++11 -g
 
 # Directories and libraries
-LIB_DIR = /home/tasos/Documents/visual_fractals/MusicBeatDetector_repo/build/MusicBeatDetector/bin/Release/
-LIBS = -L$(LIB_DIR) -lMusicBeatDetector -lportaudio -lfftw3f -lblas -lsndfile -lasound -lmp3lame -ldl -lpthread -lm -lGL -lGLU -lglfw -lGLEW
+LIBS = -lportaudio -lfftw3 -lblas -lsndfile -lasound -lmp3lame -ldl -lpthread -lm -lGL -lGLU -lglfw -lGLEW -laubio -lmpg123 -lportaudio
 
 # Source files and objects
-SRC = main.cpp sound_analysis.cpp
-OBJ = main.o sound_analysis.o
+SRC = main.cpp audioAnalyzer.cpp
+OBJ = main.o audioAnalyzer.o
 
 # Output executable
 EXEC = ./fractal
@@ -16,9 +15,11 @@ EXEC = ./fractal
 # Default target
 all: $(EXEC)
 
-# Compile sound_analysis.cpp to sound_analysis.o
-sound_analysis.o: sound_analysis.cpp
-	$(COMP) $(FLAGS) -c sound_analysis.cpp -o sound_analysis.o
+# # Compile sound_analysis.cpp to sound_analysis.o
+# sound_analysis.o: sound_analysis.cpp
+# 	$(COMP) $(FLAGS) -c sound_analysis.cpp -o sound_analysis.o
+audioAnalyzer.o: audioAnalyzer.cpp
+	$(COMP) $(FLAGS) -c audioAnalyzer.cpp -o audioAnalyzer.o
 
 # Compile main.cpp to main.o
 main.o: main.cpp

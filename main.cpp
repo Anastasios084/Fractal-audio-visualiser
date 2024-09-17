@@ -1,8 +1,12 @@
 #include <GL/glew.h> // For OpenGL functions
 #include <GLFW/glfw3.h> // For GLFW window and input handling
 #include <iostream>
-#include "sound_analysis.h"
+#include "audioAnalyzer.h"
 #include <ctime>    // For time()
+#include <thread>
+#include <chrono>
+
+
 #define RESOLUTION 1080
 #define RESOLUTION_F 1080.0f
 
@@ -15,6 +19,13 @@ void main() {
 }
 )";
 
+// Function to be executed by the thread
+void threadFunction(audioAnalyzer* anal) {
+    while(true){
+        anal->init();
+        anal->startSession(30);
+    }
+}
 const char* fragmentShaderSource2 = R"(
 #version 330 core
 out vec4 FragColor;
@@ -111,7 +122,12 @@ void initializeRandomSeed()
     std::srand(static_cast<unsigned int>(std::time(0)));
 }
 int main() {
-    int bpm = 70;//detect_shouldReturnTheBpmAndTheBeat("./mangalam.mp3", PcmAudioFrameFormat::Float);
+    //INITIALIZE MUSIC ANALYZER
+    audioAnalyzer anal;
+
+    std::thread myThread(threadFunction, &anal);
+
+    float bpm = anal.getCurrentBPM();//detect_shouldReturnTheBpmAndTheBeat("./mangalam.mp3", PcmAudioFrameFormat::Float);
     // return 0;
     // Initialize GLFW
     if (!glfwInit()) {
@@ -247,7 +263,8 @@ float startValueB = b;
 float endValueB= b-getRandomFloat();
 
 
-float duration = 60.0f / bpm; // Duration of one beat in seconds
+float durationBeat = 60.0f / bpm; // Duration of one beat in seconds
+auto startTime = std::chrono::steady_clock::now();
 while (!glfwWindowShouldClose(window)) {
     // std::cout << r << ", " << g << ", " << b << std::endl;
     
@@ -259,7 +276,7 @@ while (!glfwWindowShouldClose(window)) {
     // Update elapsed time
     elapsedTime += deltaTime;
     // Calculate the interpolation parameter t
-    float t = elapsedTime / duration;
+    float t = elapsedTime / durationBeat;
     t = t > 1.0f ? 1.0f : t; // Clamp t to a maximum of 1.0f
 
 
@@ -312,7 +329,7 @@ while (!glfwWindowShouldClose(window)) {
     endValueB = b+getRandomFloat();
 
     // Reset if the beat is complete to repeat the animation
-    if (elapsedTime >= duration) {
+    if (elapsedTime >= durationBeat) {
         elapsedTime = 0.0f;
     }
     // Input handling (for panning only)
@@ -372,6 +389,22 @@ while (!glfwWindowShouldClose(window)) {
     // Swap buffers and poll for events
     glfwSwapBuffers(window);
     glfwPollEvents();
+     // Convert float seconds to a duration
+    
+    // Get the start time
+    std::chrono::duration<float> duration(durationBeat);
+
+    if(std::chrono::steady_clock::now() - startTime < duration){
+        startTime = std::chrono::steady_clock::now();
+        bpm = anal.getCurrentBPM();//detect_shouldReturnTheBpmAndTheBeat("./mangalam.mp3", PcmAudioFrameFormat::Float);
+        if((int)bpm <= 0){ // initialize to a safe value until valid bpm value
+            bpm = 120.0;
+        }
+
+        durationBeat = 60.0f / bpm; // Duration of one beat in seconds
+        cout << (int)bpm << endl;
+    }
+
 }
 
     // Cleanup
