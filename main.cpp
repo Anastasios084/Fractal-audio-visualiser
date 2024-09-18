@@ -6,6 +6,7 @@
 #include <thread>
 #include <chrono>
 
+#define optionShader 1
 
 #define RESOLUTION_W 2560
 #define RESOLUTION_H 1080
@@ -96,62 +97,62 @@ void threadFunction(audioAnalyzer* anal) {
 // )";
 
 
-////////////////////////////////////////////////////////////////// GOOD SHADER FRFRFRFR
-// const char* fragmentShaderSource2 = R"(
-// #version 330 core
-// out vec4 FragColor;
-// uniform vec2 u_resolution;
-// uniform vec2 u_offset;
-// uniform float u_zoom;
-// uniform vec2 u_c;
-// const int MAX_ITER = 2000;
-// const int NUM_SAMPLES = 4;
-// uniform float c_parameter_r;
-// uniform float c_parameter_g;
-// uniform float c_parameter_b;
+//////////////////////////////////////////////////////////////// GOOD SHADER FRFRFRFR
+const char* fragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+uniform vec2 u_resolution;
+uniform vec2 u_offset;
+uniform float u_zoom;
+uniform vec2 u_c;
+const int MAX_ITER = 2000;
+const int NUM_SAMPLES = 4;
+uniform float c_parameter_r;
+uniform float c_parameter_g;
+uniform float c_parameter_b;
 
-// int julia(vec2 z) {
-//     int iterations = 0;
-//     for (int i = 0; i < MAX_ITER; i++) {
-//         if (length(z) > 2.0) break;
-//         float xTemp = z.x * z.x - z.y * z.y + u_c.x;
-//         z.y = 2.0 * z.x * z.y + u_c.y;
-//         z.x = xTemp;
-//         iterations++;
-//     }
-//     return iterations;
-// }
+int julia(vec2 z) {
+    int iterations = 0;
+    for (int i = 0; i < MAX_ITER; i++) {
+        if (length(z) > 2.0) break;
+        float xTemp = z.x * z.x - z.y * z.y + u_c.x;
+        z.y = 2.0 * z.x * z.y + u_c.y;
+        z.x = xTemp;
+        iterations++;
+    }
+    return iterations;
+}
 
-// void main() {
-//     // Calculate aspect ratio
-//     float aspectRatio = u_resolution.x / u_resolution.y;
+void main() {
+    // Calculate aspect ratio
+    float aspectRatio = u_resolution.x / u_resolution.y;
 
-//     // Adjust the coordinate to maintain the aspect ratio
-//     vec2 coord = (gl_FragCoord.xy / u_resolution - 0.5) * vec2(aspectRatio, 1.0) * u_zoom + u_offset;
+    // Adjust the coordinate to maintain the aspect ratio
+    vec2 coord = (gl_FragCoord.xy / u_resolution - 0.5) * vec2(aspectRatio, 1.0) * u_zoom + u_offset;
 
-//     // Supersampling offsets
-//     vec2 offsets[NUM_SAMPLES] = vec2[](
-//         vec2(-0.25, -0.25), vec2(0.25, -0.25),
-//         vec2(-0.25, 0.25), vec2(0.25, 0.25)
-//     );
+    // Supersampling offsets
+    vec2 offsets[NUM_SAMPLES] = vec2[](
+        vec2(-0.25, -0.25), vec2(0.25, -0.25),
+        vec2(-0.25, 0.25), vec2(0.25, 0.25)
+    );
 
-//     // Accumulate color over multiple samples
-//     vec3 color = vec3(0.0);
-//     for (int i = 0; i < NUM_SAMPLES; i++) {
-//         vec2 sampleCoord = coord + (offsets[i] / u_resolution) * u_zoom;
-//         int iterations = julia(sampleCoord);
-//         float t = float(iterations) / MAX_ITER;
+    // Accumulate color over multiple samples
+    vec3 color = vec3(0.0);
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        vec2 sampleCoord = coord + (offsets[i] / u_resolution) * u_zoom;
+        int iterations = julia(sampleCoord);
+        float t = float(iterations) / MAX_ITER;
 
-//         color += vec3(t * 9.0 * c_parameter_r / 2, t * 9.0 * c_parameter_g / 2, t * 9.0 * c_parameter_b / 2);
-//         if (iterations == MAX_ITER) color += vec3(0.0);
-//     }
+        color += vec3(t * 9.0 * c_parameter_r / 2, t * 9.0 * c_parameter_g / 2, t * 9.0 * c_parameter_b / 2);
+        if (iterations == MAX_ITER) color += vec3(0.0);
+    }
 
-//     // Average the color
-//     color /= float(NUM_SAMPLES);
+    // Average the color
+    color /= float(NUM_SAMPLES);
 
-//     FragColor = vec4(color, 1.0);
-// }
-// )";
+    FragColor = vec4(color, 1.0);
+}
+)";
 
 
 const char* fragmentShaderSource2 = R"(
@@ -210,6 +211,7 @@ void main() {
             0.5 + 0.5 * sin(6.0 * t + c_parameter_g * 6.28318 + 2.094),
             0.5 + 0.5 * sin(6.0 * t + c_parameter_b * 6.28318 + 4.188)
         );
+        // sampleColor = vec3(1.0) - sampleColor; 
 
         // Enhance brightness and contrast using a power function
         sampleColor = pow(sampleColor, vec3(0.8)); // Control this exponent for different effects
@@ -219,7 +221,7 @@ void main() {
 
                 // Invert color if the point is part of the fractal (iterations == MAX_ITER)
         if (iterations == MAX_ITER) {
-            sampleColor = vec3(2.0) - sampleColor; // Invert the color
+            sampleColor = vec3(1.0) - sampleColor; // Invert the color
         }
     }
 
@@ -290,6 +292,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     // Enable multisampling
     // glEnable(GL_MULTISAMPLE);
 
@@ -379,7 +382,7 @@ int main() {
 
 
     // Define the complex constant 'c' for the Julia set
-    float cX = -0.7f;  // Real part of c
+    float cX = -0.76f;  // Real part of c
     float cY = 0.27015f;  // Imaginary part of c
 
     float zoom = 0.6f;    // Initial zoom level
@@ -389,13 +392,14 @@ int main() {
     float g = 1.0f;
     float b = 1.0f;
 
-    bool increase, decreaseX, decreaseY;
+    bool increase, decreaseX, decreaseY, decrease;
     increase = false;
     decreaseX = true;
     decreaseY = true;
+    decrease = true;
     float threshold_color = 3.0f;
 
-    float change = 0.0001f;
+    float change = 0.0002f;
 
     // Initialize variables
     float lastTime = glfwGetTime();
@@ -444,40 +448,68 @@ int main() {
         zoom *= zoomSpeed;
         cout << change << endl;
 
-        // if(cX > -0.72f && decreaseX){
-        //     // Perform the interpolation
-        //     float currentValueX = lerp(startValueCX, endValueCX, t);
-        //     cX = currentValueX;
-        //     startValueCX = cX;
-        //     endValueCX = cX-change;
-        //     // cY -= 0.0001f*zoom;
-        // }else{
-        //     float currentValueX = lerp(startValueCX, endValueCX, t);
-        //     cX = currentValueX;
-        //     startValueCX = cX;
-        //     endValueCX = cX+change;
-        //     decreaseX = false;
-        //     // cX += 0.0003f*zoom;
-        //     // cY += 0.0003f*zoom;
-
-        //     if(cX > -0.68f){
-        //         decreaseX = true;
-        //     }
-        // }
+        // if(cX > -0.802f && decrease){ // shader chill
+        if(cX > -0.77f && decrease){
+        // Perform the interpolation
         float currentValueX = lerp(startValueCX, endValueCX, t);
         cX = currentValueX;
         startValueCX = cX;
-        endValueCX = cX+change;
+        endValueCX = cX-abs(change);
+        // cY -= 0.0001f*zoom;
+    }else{
+        float currentValueX = lerp(startValueCX, endValueCX, t);
+        cX = currentValueX;
+        startValueCX = cX;
+        endValueCX = cX+abs(change);
 
-        if(cX > -0.68f){
-            // cX = -0.68;
-            endValueCX = cX-abs(change);
-            change = -abs(change);
-        }else if(cX < -0.72f){
-            // cX = -0.72;
-            endValueCX = cX+abs(change);
-            change = abs(change);
+        decrease = false;
+        // cX += 0.0003f*zoom;
+        // cY += 0.0003f*zoom;
+
+        // if(cX > -0.7f){
+        if(cX > -0.69f){
+            decrease = true;
         }
+    }
+
+
+    // if(cY > 0.259 && decreaseY){
+    if(cY > 0.259 && decreaseY){
+        // Perform the interpolation
+        float currentValueY = lerp(startValueCY, endValueCY, t);
+        cY = currentValueY;
+        startValueCY = cY;
+        endValueCY = cY-abs(change);
+        // cY -= 0.0001f*zoom;
+    }else{
+        float currentValueY = lerp(startValueCY, endValueCY, t);
+        cY = currentValueY;
+        startValueCY = cY;
+        endValueCY = cY+abs(change);
+        decreaseY = false;
+        // cX += 0.0003f*zoom;
+        // cY += 0.0003f*zoom;
+
+        // if(cY > 0.271){
+        if(cY > 0.28){
+            decreaseY = true;
+        }
+    }
+
+        // float currentValueX = lerp(startValueCX, endValueCX, t);
+        // cX = currentValueX;
+        // startValueCX = cX;
+        // endValueCX = cX+change;
+
+        // if(cX > -0.68f){
+        //     // cX = -0.68;
+        //     endValueCX = cX-abs(change);
+        //     // change = -abs(change);
+        // }else if(cX < -0.72f){
+        //     // cX = -0.72;
+        //     endValueCX = cX+abs(change);
+        //     // change = abs(change);
+        // }
 
         // if(cY > 0.252f && decreaseY){
         //     float currentValueY = lerp(startValueCY, endValueCY, t);
@@ -497,21 +529,21 @@ int main() {
 
         // }
 
-        float currentValueY = lerp(startValueCY, endValueCY, t);
-        cY = currentValueY;
-        startValueCY = cY;
-        endValueCY = cY+change;
+        // float currentValueY = lerp(startValueCY, endValueCY, t);
+        // cY = currentValueY;
+        // startValueCY = cY;
+        // endValueCY = cY+change;
 
-        if(cY > 0.28f){
-            endValueCY = cY-abs(change);
-            change = -abs(change);
+        // if(cY > 0.28f){
+        //     endValueCY = cY-abs(change);
+        //     // change = -abs(change);
 
-        }else if(cY < 0.252f){
-            cY = 0.252f;
-            endValueCY = cY+abs(change);
-            change = abs(change);
+        // }else if(cY < 0.252f){
+        //     cY = 0.252f;
+        //     endValueCY = cY+abs(change);
+        //     // change = abs(change);
 
-        }
+        // }
 
 
 
@@ -602,13 +634,13 @@ int main() {
             durationBeat = 60.0f / bpm; // Duration of one beat in seconds
             cout << (int)bpm << endl;
             if(counter == 20){
-                change = (anal.getCurrentFrequency()/anal.maxLowBeat()) > 0.0005 ? 0.0001 : (anal.getCurrentFrequency()/anal.maxLowBeat());
-                if(change > 0.0001){
-                    change = 0.0001;
-                }else if (change < -0.0001){
-                    change = -0.0001;
+                change = (anal.getCurrentFrequency()/anal.maxLowBeat()) > 0.0002 ? 0.0002 : (anal.getCurrentFrequency()/anal.maxLowBeat());
+                if(change > 0.0002){
+                    change = 0.0002;
+                }else if (change < -0.0002){
+                    change = -0.0002;
                 }else if((int)change < -10){
-                    change = 0.0001;
+                    change = 0.0002;
                 }
                 counter = 0;
             }else{

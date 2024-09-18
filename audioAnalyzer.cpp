@@ -71,7 +71,7 @@ int streamCallback(
             
         callbackData->freq = freq;
 
-        if (freq > 20.0 && i < 10) {// VERY meh implementation
+        if (freq > 15.0 && i < 10) {// VERY meh implementation
             callbackData->lowBeat = true;
             if(callbackData->maxLowBeat < freq){
                 callbackData->maxLowBeat = freq;
@@ -79,7 +79,7 @@ int streamCallback(
             cout << "LOW BEAT DETECTED - " << i << endl;
             break;
             // printf("-%f - %f/n",proportion, freq);
-        }else if (freq > 15.0 && i > 80) {
+        }else if (freq > 25.0 && i > 80) {
             callbackData->highBeat = true;
             if(callbackData->maxHighBeat < freq){
                 callbackData->maxHighBeat = freq;
