@@ -21,7 +21,7 @@ float bpmDetection(streamCallbackData* data, const void *inputBuffer){
         data->bpm_sum += bpm;
         data->bpm_count++;
     }
-    cout << data->bpm_sum << " - " << data->bpm_count;
+    //cout << data->bpm_sum << " - " << data->bpm_count;
     return data->bpm_sum/data->bpm_count;
 }
 
@@ -68,16 +68,22 @@ int streamCallback(
         double proportion = std::pow(i / (double)dispSize, 1);
         double freq = callbackData->out[(int)(callbackData->startIndex
             + proportion * callbackData->spectroSize/10)];
-        
-        if (freq > 15.0 && i < 10) {// VERY meh implementation
-            callbackData->highBeat = true;
-            callbackData->freq = freq;
+            
+        callbackData->freq = freq;
+
+        if (freq > 20.0 && i < 10) {// VERY meh implementation
+            callbackData->lowBeat = true;
+            if(callbackData->maxLowBeat < freq){
+                callbackData->maxLowBeat = freq;
+            }
             cout << "LOW BEAT DETECTED - " << i << endl;
             break;
             // printf("-%f - %f/n",proportion, freq);
         }else if (freq > 15.0 && i > 80) {
             callbackData->highBeat = true;
-            callbackData->freq = freq;
+            if(callbackData->maxHighBeat < freq){
+                callbackData->maxHighBeat = freq;
+            }
             cout << "HIGH BEAT DETECTED - " << i << endl;
             break;
         } 
@@ -241,4 +247,18 @@ bool audioAnalyzer::highBeat(){
     return this->spectroData->highBeat;
 }
 
+float audioAnalyzer::maxLowBeat(){
+    return this->spectroData->maxLowBeat;
+}
+float audioAnalyzer::maxHighBeat(){
+    return this->spectroData->maxHighBeat;
+}
+
+
+void audioAnalyzer::setLowBeat(bool){
+    this->spectroData->lowBeat = false;
+}
+void audioAnalyzer::setHighBeat(bool){
+    this->spectroData->highBeat = false;
+}
 

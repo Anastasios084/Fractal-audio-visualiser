@@ -49,9 +49,11 @@ typedef struct {
     std::vector<float> high_beats;
 
     float current_bpm = 120.0;
-    double freq = 0.0f;
+    double freq = 1.0f;
     bool lowBeat = false;
     bool highBeat = false;
+    float maxLowBeat = 1.0;
+    float maxHighBeat = 1.0;
 
 } streamCallbackData;
 
@@ -71,10 +73,15 @@ class audioAnalyzer{
         int init();
         int startSession(int, int device=7);
 
+        void setLowBeat(bool);
+        void setHighBeat(bool);
+
         float getCurrentBPM();
         float getCurrentFrequency();
         bool lowBeat();
         bool highBeat();
+        float maxLowBeat();
+        float maxHighBeat();
 
 
 
