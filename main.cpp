@@ -5,6 +5,10 @@
 #include <ctime>    // For time()
 #include <thread>
 #include <chrono>
+#include "juliaChill.h"
+#include "juliaTrippy.h"
+#include "juliaNoisy.h"
+#include "juliaDark.h"
 
 #define optionShader 1
 
@@ -30,208 +34,6 @@ void threadFunction(audioAnalyzer* anal) {
         anal->startSession(30);
     }
 }
-// const char* fragmentShaderSource2 = R"(
-// #version 330 core
-// out vec4 FragColor;
-// uniform vec2 u_resolution;
-// uniform vec2 u_offset;
-// uniform float u_zoom;
-// uniform vec2 u_c;
-// const int MAX_ITER = 1000;
-// const int NUM_SAMPLES = 4;
-// uniform float c_parameter_r;
-// uniform float c_parameter_g;
-// uniform float c_parameter_b;
-// uniform float amplitude;
-
-// // Modified Julia function that blends between two formulas
-// int julia(vec2 z) {
-//     int iterations = 0;
-//     vec2 z1 = z;
-//     vec2 z2 = z;
-//     for (int i = 0; i < MAX_ITER; i++) {
-//         if (length(z) > 2.0) break;
-
-//         // Standard Julia formula
-//         z1 = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + u_c;
-
-//         // Alternative formula, e.g., sin-based
-//         float theta = atan(z.y, z.x);
-//         vec2 z2 = pow(z, 2) * vec2(cos(power * theta), sin(power * theta)) + z;
-
-//         // Blend between the two formulas
-//         z = mix(z1, z2, amplitude);
-
-//         iterations++;
-//     }
-//     return iterations;
-// }
-
-// void main() {
-//     vec2 coord = (gl_FragCoord.xy / u_resolution - 0.5) * u_zoom + u_offset;
-
-//     // Supersampling offsets
-//     vec2 offsets[NUM_SAMPLES] = vec2[](
-//         vec2(-0.25, -0.25), vec2(0.25, -0.25),
-//         vec2(-0.25, 0.25), vec2(0.25, 0.25)
-//     );
-
-//     // Accumulate color over multiple samples
-//     vec3 color = vec3(0.0);
-//     for (int i = 0; i < NUM_SAMPLES; i++) {
-//         vec2 sampleCoord = coord + (offsets[i] / u_resolution) * u_zoom;
-//         sampleCoord = sin(sampleCoord);
-//         int iterations = julia(sampleCoord);
-//         float t = float(iterations) / MAX_ITER;
-//         //color += vec3(t * 9.0 * c_parameter_r, t * t * 15.0 * c_parameter_g, t * t * t * 8.5 * c_parameter_b);
-
-//         color += vec3(t * 9.0 * c_parameter_r/2, t * 9.0 * c_parameter_g/2, t * 9.0 * c_parameter_b/2);
-//         if (iterations == MAX_ITER) color += vec3(0.0);
-//     }
-
-//     // Average the color
-//     color /= float(NUM_SAMPLES);
-
-//     FragColor = vec4(color, 1.0);
-// }
-// )";
-
-
-//////////////////////////////////////////////////////////////// GOOD SHADER FRFRFRFR
-const char* fragmentShaderSource = R"(
-#version 330 core
-out vec4 FragColor;
-uniform vec2 u_resolution;
-uniform vec2 u_offset;
-uniform float u_zoom;
-uniform vec2 u_c;
-const int MAX_ITER = 2000;
-const int NUM_SAMPLES = 4;
-uniform float c_parameter_r;
-uniform float c_parameter_g;
-uniform float c_parameter_b;
-
-int julia(vec2 z) {
-    int iterations = 0;
-    for (int i = 0; i < MAX_ITER; i++) {
-        if (length(z) > 2.0) break;
-        float xTemp = z.x * z.x - z.y * z.y + u_c.x;
-        z.y = 2.0 * z.x * z.y + u_c.y;
-        z.x = xTemp;
-        iterations++;
-    }
-    return iterations;
-}
-
-void main() {
-    // Calculate aspect ratio
-    float aspectRatio = u_resolution.x / u_resolution.y;
-
-    // Adjust the coordinate to maintain the aspect ratio
-    vec2 coord = (gl_FragCoord.xy / u_resolution - 0.5) * vec2(aspectRatio, 1.0) * u_zoom + u_offset;
-
-    // Supersampling offsets
-    vec2 offsets[NUM_SAMPLES] = vec2[](
-        vec2(-0.25, -0.25), vec2(0.25, -0.25),
-        vec2(-0.25, 0.25), vec2(0.25, 0.25)
-    );
-
-    // Accumulate color over multiple samples
-    vec3 color = vec3(0.0);
-    for (int i = 0; i < NUM_SAMPLES; i++) {
-        vec2 sampleCoord = coord + (offsets[i] / u_resolution) * u_zoom;
-        int iterations = julia(sampleCoord);
-        float t = float(iterations) / MAX_ITER;
-
-        color += vec3(t * 9.0 * c_parameter_r / 2, t * 9.0 * c_parameter_g / 2, t * 9.0 * c_parameter_b / 2);
-        if (iterations == MAX_ITER) color += vec3(0.0);
-    }
-
-    // Average the color
-    color /= float(NUM_SAMPLES);
-
-    FragColor = vec4(color, 1.0);
-}
-)";
-
-
-const char* fragmentShaderSource2 = R"(
-#version 330 core
-out vec4 FragColor;
-uniform vec2 u_resolution;
-uniform vec2 u_offset;
-uniform float u_zoom;
-uniform vec2 u_c;
-const int MAX_ITER = 200;
-const int NUM_SAMPLES = 4; // Ensure this matches your supersampling setup
-uniform float c_parameter_r;
-uniform float c_parameter_g;
-uniform float c_parameter_b;
-
-int julia(vec2 z) {
-    int iterations = 0;
-    for (int i = 0; i < MAX_ITER; i++) {
-        if (length(z) > 2.0) break;
-        float xTemp = z.x * z.x - z.y * z.y + u_c.x;
-        z.y = 2.0 * z.x * z.y + u_c.y;
-        z.x = xTemp;
-        iterations++;
-    }
-    return iterations;
-}
-
-void main() {
-    // Calculate aspect ratio
-    float aspectRatio = u_resolution.x / u_resolution.y;
-
-    // Adjust the coordinate to maintain the aspect ratio
-    vec2 coord = (gl_FragCoord.xy / u_resolution - 0.5) * vec2(aspectRatio, 1.0) * u_zoom + u_offset;
-
-    // Supersampling offsets for 8x MSAA
-    // vec2 offsets[NUM_SAMPLES] = vec2[](
-    //     vec2(-0.125, -0.375), vec2(0.125, -0.375),
-    //     vec2(-0.375, -0.125), vec2(0.375, -0.125),
-    //     vec2(-0.125, 0.125), vec2(0.125, 0.125),
-    //     vec2(-0.375, 0.375), vec2(0.375, 0.375)
-    // );
-    vec2 offsets[NUM_SAMPLES] = vec2[](
-        vec2(-0.25, -0.25), vec2(0.25, -0.25),
-        vec2(-0.25, 0.25), vec2(0.25, 0.25)
-    );
-    // Accumulate color over multiple samples
-    vec3 color = vec3(0.0);
-    for (int i = 0; i < NUM_SAMPLES; i++) {
-        vec2 sampleCoord = coord + (offsets[i] / u_resolution) * u_zoom;
-        int iterations = julia(sampleCoord);
-        float t = float(iterations) / MAX_ITER; // Normalize iteration count
-
-        // Enhanced color transition using multiple sine waves for vibrant effect
-        vec3 sampleColor = vec3( // + 0.5 se ola itan kanonika alla to evgala!!!!!!!!!!!!!!!!!!!!S 
-            0.5 + 0.5 * sin(6.0 * t + c_parameter_r * 6.28318),
-            0.5 + 0.5 * sin(6.0 * t + c_parameter_g * 6.28318 + 2.094),
-            0.5 + 0.5 * sin(6.0 * t + c_parameter_b * 6.28318 + 4.188)
-        );
-        // sampleColor = vec3(1.0) - sampleColor; 
-
-        // Enhance brightness and contrast using a power function
-        sampleColor = pow(sampleColor, vec3(0.8)); // Control this exponent for different effects
-
-        // Accumulate the sample color
-        color += sampleColor;
-
-                // Invert color if the point is part of the fractal (iterations == MAX_ITER)
-        if (iterations == MAX_ITER) {
-            sampleColor = vec3(1.0) - sampleColor; // Invert the color
-        }
-    }
-
-    // Average the color and apply final intensity adjustment
-    color = color / float(NUM_SAMPLES) * 0.8; // Adjust final intensity for better visual balance
-
-    FragColor = vec4(color, 1.0);
-}
-)";
-
 
 // Check for shader compile errors
 void checkShaderCompileError(GLuint shader) {
@@ -274,6 +76,7 @@ void initializeRandomSeed()
 {
     std::srand(static_cast<unsigned int>(std::time(0)));
 }
+
 int main() {
     //INITIALIZE MUSIC ANALYZER
     audioAnalyzer anal;
@@ -361,7 +164,7 @@ int main() {
 
     // Create and compile fragment shader
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource2, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource2, NULL); /////////////////////////////////////////////////////// CHANGE HERE FOR DIFFERENT SHADER
     glCompileShader(fragmentShader);
     checkShaderCompileError(fragmentShader);
 
@@ -448,8 +251,8 @@ int main() {
         zoom *= zoomSpeed;
         cout << change << endl;
 
-        // if(cX > -0.802f && decrease){ // shader chill
-        if(cX > -0.77f && decrease){
+    // if(cX > -0.77f && decrease){ // shader chill
+    if(cX > -0.77f && decrease){
         // Perform the interpolation
         float currentValueX = lerp(startValueCX, endValueCX, t);
         cX = currentValueX;
@@ -490,7 +293,7 @@ int main() {
         // cX += 0.0003f*zoom;
         // cY += 0.0003f*zoom;
 
-        // if(cY > 0.271){
+        // if(cY > 0.273){
         if(cY > 0.28){
             decreaseY = true;
         }
@@ -613,9 +416,14 @@ int main() {
         glfwPollEvents();
         // Convert float seconds to a duration
         
+
+        // float currentAmp= lerp(startAmp, endAmp, t);
+        // amp = currentAmp;
+        // startAmp = amp;
+        // endAmp= sin(anal.getCurrentFrequency() * swayAmplitude) * sin(anal.getCurrentFrequency() * swayAmplitude);
+
         // Get the start time
         std::chrono::duration<float> duration(durationBeat);
-
         if(std::chrono::steady_clock::now() - startTime < duration){
             startTime = std::chrono::steady_clock::now();
             bpm = anal.getCurrentBPM();//detect_shouldReturnTheBpmAndTheBeat("./mangalam.mp3", PcmAudioFrameFormat::Float);
@@ -627,6 +435,13 @@ int main() {
             amp = currentAmp;
             startAmp = amp;
             endAmp= sin(anal.getCurrentFrequency() * swayAmplitude) * sin(anal.getCurrentFrequency() * swayAmplitude);
+
+            // startAmp = currentAmp;
+            // endAmp = anal.getCurrentFrequency();
+            // currentAmp= lerp(startAmp, endAmp, t);
+            // amp = currentAmp;
+            // startAmp = amp;
+            // endAmp= sin(anal.getCurrentFrequency() * swayAmplitude) * sin(anal.getCurrentFrequency() * swayAmplitude);
 
             cout << "amp -> " << amp << endl;
             cout << anal.getCurrentFrequency() << " - " << anal.maxLowBeat() << (anal.getCurrentFrequency()/anal.maxLowBeat()) << endl;
@@ -658,15 +473,15 @@ int main() {
                 anal.setLowBeat(false);
             }else{
                 if(r>0.05)
-                    r -= 0.005+getRandomFloat()/100;
+                    r -= 0.01+getRandomFloat()/100;
                 else
                     r = 0.05;
                 if(g>0.0f)
-                    g -= 0.005+getRandomFloat()/100;
+                    g -= 0.01+getRandomFloat()/100;
                 else
                     g = 0.0;
                 if(b>0.05)
-                    b -= 0.005+getRandomFloat()/100;
+                    b -= 0.01+getRandomFloat()/100;
                 else
                     b = 0.5;  
             }
