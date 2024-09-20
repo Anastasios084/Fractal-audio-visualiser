@@ -1,0 +1,75 @@
+#version 330 core
+
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform float uTime;
+
+// Quaternion operations
+struct Quaternion {
+    vec4 q;
+};
+
+// Perform quaternion multiplication
+Quaternion quatMult(Quaternion a, Quaternion b) {
+    return Quaternion(
+        vec4(
+            a.q.w * b.q.x + a.q.x * b.q.w + a.q.y * b.q.z - a.q.z * b.q.y,
+            a.q.w * b.q.y - a.q.x * b.q.z + a.q.y * b.q.w + a.q.z * b.q.x,
+            a.q.w * b.q.z + a.q.x * b.q.y - a.q.y * b.q.x + a.q.z * b.q.w,
+            a.q.w * b.q.w - a.q.x * b.q.x - a.q.y * b.q.y - a.q.z * b.q.z
+        )
+    );
+}
+
+// Compute the quaternion Julia set distance function
+float quaternionJuliaDistance(Quaternion z, Quaternion c) {
+    int iterations = 0;
+    const int maxIterations = 100;
+    float bailout = 4.0;
+    float dist = 0.0;
+
+    while (iterations < maxIterations && length(z.q) < bailout) {
+        z = quatMult(z, z);  // z = z^2
+        z.q += c.q;  // z = z + c
+        dist = length(z.q);
+        iterations++;
+    }
+    
+    return dist;
+}
+
+// Perform ray marching to find intersection with the fractal surface
+float rayMarch(vec3 ro, vec3 rd, Quaternion c) {
+    float dist = 0.0;
+    float totalDist = 0.0;
+    vec3 p = ro;
+    
+    for (int i = 0; i < 100; ++i) {
+        // Convert the 3D point into a quaternion for fractal distance calculation
+        Quaternion z = Quaternion(vec4(p, 0.0));
+        dist = quaternionJuliaDistance(z, c);
+        totalDist += dist;
+        p += rd * dist;
+        
+        if (dist < 0.001) break;  // Stop marching if close enough
+    }
+    
+    return totalDist;
+}
+
+void main() {
+    vec3 ro = vec3(0.0, 0.0, 3.0);  // Ray origin (camera)
+    vec3 rd = normalize(vec3(TexCoords, -1.0));  // Ray direction (from camera through pixel)
+
+    // Dynamically change the quaternion c over time
+    Quaternion c = Quaternion(vec4(sin(uTime), cos(uTime * 0.5), sin(uTime * 0.3), cos(uTime)));
+
+    // Perform ray marching to find the fractal surface
+    float dist = rayMarch(ro, rd, c);
+
+    // Simple lighting based on distance
+    vec3 color = vec3(1.0 - dist * 0.1);
+    FragColor = vec4(color, 1.0);
+}

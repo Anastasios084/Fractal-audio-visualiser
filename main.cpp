@@ -9,6 +9,9 @@
 #include "juliaTrippy.h"
 #include "juliaNoisy.h"
 #include "juliaDark.h"
+#include "keleidoscope.h"
+#include "juliaWorley.h"
+#include "mengerSponge.h"
 
 #define optionShader 1
 
@@ -164,7 +167,7 @@ int main() {
 
     // Create and compile fragment shader
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource2, NULL); /////////////////////////////////////////////////////// CHANGE HERE FOR DIFFERENT SHADER
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource7, NULL); /////////////////////////////////////////////////////// CHANGE HERE FOR DIFFERENT SHADER
     glCompileShader(fragmentShader);
     checkShaderCompileError(fragmentShader);
 
@@ -405,6 +408,9 @@ int main() {
         glUniform1f(glGetUniformLocation(shaderProgram, "c_parameter_g"), g);  // red
         glUniform1f(glGetUniformLocation(shaderProgram, "c_parameter_b"), b);  // red
         glUniform1f(glGetUniformLocation(shaderProgram, "amplitude"), amp);  // red
+
+        glUniform1f(glGetUniformLocation(shaderProgram, "continuous_time"), currentTime);
+        glUniform1f(glGetUniformLocation(shaderProgram, "u_time"), durationBeat);
 
         // Clear the screen and draw the quad
         glClear(GL_COLOR_BUFFER_BIT);

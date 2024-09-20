@@ -10,7 +10,7 @@ const int NUM_SAMPLES = 4;
 uniform float c_parameter_r;
 uniform float c_parameter_g;
 uniform float c_parameter_b;
-uniform float amplitube;
+uniform float amplitude;
 
 int julia(vec2 z) {
     int iterations = 0;
